@@ -53,15 +53,18 @@ RUN pnpm run build
 FROM alpine:3.19
 
 LABEL org.opencontainers.image.title="AWS MFA Credentials" \
-    org.opencontainers.image.description="Docker Desktop extension for AWS MFA credential management" \
+    org.opencontainers.image.description="Manage AWS MFA credentials for Docker containers with automatic session token generation" \
     org.opencontainers.image.vendor="quinnjr" \
+    org.opencontainers.image.source="https://github.com/quinnjr/docker-plugin-aws" \
+    org.opencontainers.image.licenses="MIT" \
     com.docker.desktop.extension.api.version="0.3.4" \
     com.docker.desktop.extension.icon="https://raw.githubusercontent.com/quinnjr/docker-plugin-aws/main/aws-icon.svg" \
-    com.docker.extension.screenshots='[{"alt":"AWS MFA Login","url":"https://raw.githubusercontent.com/quinnjr/docker-plugin-aws/main/screenshots/login.png"}]' \
-    com.docker.extension.detailed-description="Automatically manage AWS MFA credentials for Docker containers" \
+    com.docker.extension.screenshots='[{"alt":"AWS MFA Login - Authenticate with MFA token","url":"https://raw.githubusercontent.com/quinnjr/docker-plugin-aws/main/screenshots/login.png"},{"alt":"Settings - Configure credential sources","url":"https://raw.githubusercontent.com/quinnjr/docker-plugin-aws/main/screenshots/settings.png"}]' \
+    com.docker.extension.detailed-description="<h2>AWS MFA Credentials Manager</h2><p>Simplify AWS MFA authentication for Docker workflows. This extension manages temporary session credentials so you can seamlessly use AWS services in containers.</p><h3>Features</h3><ul><li>Authenticate with MFA token codes</li><li>Automatic credential caching (12-hour sessions)</li><li>WSL2 integration support</li><li>Multiple credential source options</li><li>CLI tool for terminal usage</li><li>Export credentials as environment files</li></ul><h3>CLI Commands</h3><pre>docker aws login -p profile-name<br/>docker aws run -- aws s3 ls<br/>docker aws compose -- up -d<br/>eval $(docker aws env --export)</pre>" \
     com.docker.extension.publisher-url="https://github.com/quinnjr" \
-    com.docker.extension.additional-urls='[{"title":"GitHub","url":"https://github.com/quinnjr/docker-plugin-aws"}]' \
-    com.docker.extension.changelog="Initial release"
+    com.docker.extension.additional-urls='[{"title":"GitHub Repository","url":"https://github.com/quinnjr/docker-plugin-aws"},{"title":"Report Issues","url":"https://github.com/quinnjr/docker-plugin-aws/issues"}]' \
+    com.docker.extension.categories='["cloud","security","utility"]' \
+    com.docker.extension.changelog="<h3>v4.0.0</h3><ul><li>WSL2 integration support</li><li>Multiple credential source selection</li><li>Settings UI panel</li><li>Environment detection</li></ul>"
 
 # Copy metadata
 COPY metadata.json .
