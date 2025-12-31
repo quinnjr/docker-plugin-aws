@@ -7,7 +7,7 @@ BUILDER=buildx-multi-arch
 
 # Install UI dependencies
 ui/node_modules: ui/package.json
-	cd ui && npm install
+	cd ui && pnpm install
 
 # Build for local architecture
 build: ui/node_modules
@@ -41,8 +41,8 @@ uninstall:
 
 # Enable development mode (hot reload UI)
 dev: build
-	docker extension dev ui-source $(IMAGE):$(TAG) http://localhost:5173
-	cd ui && npm run dev
+	docker extension dev ui-source $(IMAGE):$(TAG) http://localhost:4200
+	cd ui && pnpm start
 
 # Reset development mode
 dev-reset:

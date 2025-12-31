@@ -33,14 +33,21 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /linux-am
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o /linux-arm64/docker-aws .
 RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o /windows-amd64/docker-aws.exe .
 
-# Build the UI
-FROM --platform=$BUILDPLATFORM node:20-alpine AS ui-builder
+# Build the UI with Angular 21 and pnpm
+FROM --platform=$BUILDPLATFORM node:22-alpine AS ui-builder
 
 WORKDIR /app
-COPY ui/package*.json ./
-RUN npm ci
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+# Copy package files
+COPY ui/package.json ui/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile || pnpm install
+
+# Copy source and build
 COPY ui/ ./
-RUN npm run build
+RUN pnpm run build
 
 # Final image
 FROM alpine:3.19
@@ -63,8 +70,8 @@ COPY aws-icon.svg .
 # Copy backend binary
 COPY --from=builder /backend /backend
 
-# Copy UI
-COPY --from=ui-builder /app/dist /ui
+# Copy UI (Angular outputs to dist/browser/)
+COPY --from=ui-builder /app/dist/browser /ui
 
 # Copy CLI binaries for host
 COPY --from=cli-builder /darwin-amd64/docker-aws /darwin/docker-aws
