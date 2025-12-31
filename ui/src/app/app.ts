@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -33,11 +33,23 @@ export class App implements OnInit, OnDestroy {
   showSettings = signal(false);
   settingsLoading = signal(false);
 
-  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  // Theme
+  theme = signal<'light' | 'dark' | 'system'>('system');
+  isDarkMode = signal(true);
 
-  constructor(private dockerService: DockerExtensionService) {}
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
+  private mediaQuery: MediaQueryList | null = null;
+
+  constructor(private dockerService: DockerExtensionService) {
+    // React to theme changes
+    effect(() => {
+      const theme = this.theme();
+      this.applyTheme(theme);
+    });
+  }
 
   ngOnInit(): void {
+    this.initializeTheme();
     this.fetchEnvironment();
     this.fetchSettings();
     this.refreshAll();
@@ -48,6 +60,78 @@ export class App implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    if (this.mediaQuery) {
+      this.mediaQuery.removeEventListener('change', this.handleSystemThemeChange);
+    }
+  }
+
+  // Theme management
+
+  private initializeTheme(): void {
+    // Load saved theme preference
+    const savedTheme = localStorage.getItem('aws-mfa-theme') as 'light' | 'dark' | 'system' | null;
+    if (savedTheme) {
+      this.theme.set(savedTheme);
+    }
+
+    // Set up system theme detection
+    this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    this.mediaQuery.addEventListener('change', this.handleSystemThemeChange);
+
+    // Apply initial theme
+    this.applyTheme(this.theme());
+  }
+
+  private handleSystemThemeChange = (e: MediaQueryListEvent): void => {
+    if (this.theme() === 'system') {
+      this.isDarkMode.set(e.matches);
+      this.updateDocumentTheme(e.matches);
+    }
+  };
+
+  private applyTheme(theme: 'light' | 'dark' | 'system'): void {
+    let isDark: boolean;
+
+    if (theme === 'system') {
+      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } else {
+      isDark = theme === 'dark';
+    }
+
+    this.isDarkMode.set(isDark);
+    this.updateDocumentTheme(isDark);
+
+    // Save preference
+    localStorage.setItem('aws-mfa-theme', theme);
+  }
+
+  private updateDocumentTheme(isDark: boolean): void {
+    const root = document.documentElement;
+    if (isDark) {
+      root.removeAttribute('data-theme');
+    } else {
+      root.setAttribute('data-theme', 'light');
+    }
+  }
+
+  toggleTheme(): void {
+    const current = this.theme();
+    // Cycle through: system -> light -> dark -> system
+    if (current === 'system') {
+      this.theme.set('light');
+    } else if (current === 'light') {
+      this.theme.set('dark');
+    } else {
+      this.theme.set('system');
+    }
+  }
+
+  getThemeIcon(): string {
+    const theme = this.theme();
+    if (theme === 'system') {
+      return 'system';
+    }
+    return this.isDarkMode() ? 'dark' : 'light';
   }
 
   async fetchEnvironment(): Promise<void> {
